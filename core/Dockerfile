@@ -53,6 +53,7 @@ FROM "${DOCKER_HUB_PROXY}debian:bullseye-slim" as php-build
         php-dev \
         php-xml \
         php-pear \
+        php-pgsql \
         librdkafka-dev \
         libsimdjson-dev \
         libzstd-dev \
@@ -128,8 +129,8 @@ EOF
         
         # Remove files we do not care for
         rm -r /var/www/MISP/PyMISP
-        find /var/www/MISP/INSTALL/* ! -name 'MYSQL.sql' -type f -exec rm {} +
-        find /var/www/MISP/INSTALL/* ! -name 'MYSQL.sql' -type l -exec rm {} +
+#        find /var/www/MISP/INSTALL/* ! -name 'MYSQL.sql' -type f -exec rm {} +
+#        find /var/www/MISP/INSTALL/* ! -name 'MYSQL.sql' -type l -exec rm {} +
         # Remove most files in .git - we do not use git functionality in docker
         find /var/www/MISP/.git/* ! -name HEAD -exec rm -rf {} +
 EOF
@@ -166,6 +167,7 @@ FROM "${DOCKER_HUB_PROXY}debian:bullseye-slim"
         php-bcmath \
         php-mbstring \
         php-mysql \
+        php-pgsql \
         php-redis \
         php-gd \
         php-fpm \
@@ -177,7 +179,7 @@ FROM "${DOCKER_HUB_PROXY}debian:bullseye-slim"
         libsimdjson5 \
         libzstd1 \
         # Unsure we need these
-        zip unzip \
+        zip unzip postgresql-client\
         # Require for advanced an unattended configuration
         curl jq \
         && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*

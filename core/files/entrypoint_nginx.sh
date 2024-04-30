@@ -14,6 +14,8 @@ trap term_proc SIGTERM
 [ -z "$MYSQL_PASSWORD" ] && MYSQL_PASSWORD=example
 [ -z "$MYSQL_DATABASE" ] && MYSQL_DATABASE=misp
 [ -z "$MYSQLCMD" ] && export MYSQLCMD="mysql -u $MYSQL_USER -p$MYSQL_PASSWORD -P $MYSQL_PORT -h $MYSQL_HOST -r -N $MYSQL_DATABASE"
+export PGPASSWORD=$MYSQL_PASSWORD
+[ -z "$PSQLCMD" ] && export PSQLCMD="psql -U $MYSQL_USER -h $MYSQL_HOST -d $MYSQL_DATABASE"
 [ -z "$CRON_USER_ID" ] && export CRON_USER_ID="1"
 [ -z "$BASE_URL" ] && export BASE_URL="https://localhost"
 [ -z "$DISABLE_IPV6" ] && export DISABLE_IPV6=false
@@ -49,6 +51,56 @@ init_mysql(){
     else
         echo "... database has not been initialized, importing MySQL scheme..."
         $MYSQLCMD < /var/www/MISP/INSTALL/MYSQL.sql
+    fi
+}
+
+init_postgresql(){
+  echo $PGPASSWORD;
+  echo $PSQLCMD;
+  echo $PSQLCMD;
+  echo $PSQLCMD;
+  echo $PSQLCMD;
+  echo $PSQLCMD;
+  echo $PSQLCMD;
+  echo $PSQLCMD;
+  echo $PSQLCMD;
+
+    # Test when MySQL is ready....
+    # wait for Database come ready
+    isDBup () {
+        echo "\dt" | $PSQLCMD 1>/dev/null
+        echo $?
+    }
+
+    isDBinitDone () {
+        # Execute \d command to list tables and grep for "attributes"
+        if echo "\d" | $PSQLCMD | grep -q "Did not find any relations."; then
+            # Table doesn't exist
+            return 1
+        else
+            # Table exists
+            return 0
+        fi
+    }
+
+
+    RETRY=100
+    until [ $(isDBup) -eq 0 ] || [ $RETRY -le 0 ] ; do
+        echo "... waiting for database to come up"
+        sleep 5
+        RETRY=$(( RETRY - 1))
+    done
+    if [ $RETRY -le 0 ]; then
+        >&2 echo "... error: Could not connect to Database on $MYSQL_HOST:$MYSQL_PORT"
+        exit 1
+    fi
+
+    if [ $(isDBinitDone) -eq 0 ]; then
+        echo "... database has already been initialized"
+    else
+        echo "... database has not been initialized, importing MySQL scheme..."
+        $PSQLCMD < /var/www/MISP/INSTALL/POSTGRESQL-structure.sql
+        $PSQLCMD < /var/www/MISP/INSTALL/POSTGRESQL-data-initial.sql
     fi
 }
 
@@ -266,7 +318,8 @@ init_nginx() {
 
 
 # Initialize MySQL
-echo "INIT | Initialize MySQL ..." && init_mysql
+#echo "INIT | Initialize MySQL ..." && init_mysql
+echo "INIT | Initialize PostgreSQL ..." && init_postgresql
 
 # Initialize NGINX
 echo "INIT | Initialize NGINX ..." && init_nginx
